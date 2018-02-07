@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -73,6 +74,11 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
+import com.irdeto.drm.ChinaDrm;
+import com.irdeto.drm.DeviceInfo;
+import com.irdeto.drm.session.Session;
+import com.irdeto.drm.utility.Utility;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.CookieHandler;
@@ -367,6 +373,21 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
       case C.TYPE_DASH:
         return new DashMediaSource(uri, buildDataSourceFactory(false),
             new DefaultDashChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
+      case C.TYPE_IRDETO_HLS:
+       String signFile="acv.dat";
+       String configFile="cdrm_config.dat";
+        Utility.copySecureFile(this,signFile,Utility.getSecurePath(this)+signFile);
+        Utility.copySecureFile(this,configFile,Utility.getSecurePath(this)+configFile);
+       // Utility.copySecureFile(this,configFile,Utility.getSecurePath(this)+ssFile);
+        String securePath = Utility.getSecurePath(this);
+        final ChinaDrm drm = new ChinaDrm(this, securePath, DeviceInfo.getInstance(this));
+         new Thread(new Runnable() {
+            @Override
+              public void run(){
+                  drm.startup(PlayerActivity.this) ;
+              }
+          }).start();
+        return new com.irdeto.chinadrm.hls.HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger,drm);
       case C.TYPE_HLS:
         return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger);
       case C.TYPE_OTHER:

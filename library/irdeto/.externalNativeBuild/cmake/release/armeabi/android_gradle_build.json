@@ -1,0 +1,61 @@
+
+{
+	"buildFiles" : 
+	[
+		"C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/CMakeLists.txt"
+	],
+	"cleanCommands" : 
+	[
+		"C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\UserZone\\dev\\androidStudioproject\\ExoPlayer\\library\\irdeto\\.externalNativeBuild\\cmake\\release\\armeabi --target clean"
+	],
+	"cppFileExtensions" : [ "cpp" ],
+	"libraries" : 
+	{
+		"libdrm-Release-armeabi" : 
+		{
+			"abi" : "armeabi",
+			"artifactName" : "libdrm",
+			"buildType" : "release",
+			"output" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/src/main/jni/static/armeabi/libirdetodrm.a",
+			"toolchain" : "1947160777"
+		},
+		"native-lib-Release-armeabi" : 
+		{
+			"abi" : "armeabi",
+			"artifactName" : "native-lib",
+			"buildCommand" : "C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\UserZone\\dev\\androidStudioproject\\ExoPlayer\\library\\irdeto\\.externalNativeBuild\\cmake\\release\\armeabi --target native-lib",
+			"buildType" : "release",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --target=armv5te-none-linux-androideabi --gcc-toolchain=C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64 --sysroot=C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\jni\\jni_include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\libs\\armeabi\\include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include\\backward  -isystem C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=14 -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security  -DTEST_CPP_FLAG2 -DTEST_CPP_FLAG2 -Os -DNDEBUG  -fPIC    -c ",
+					"src" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/src/main/jni/drm_jni.cpp",
+					"workingDirectory" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/.externalNativeBuild/cmake/release/armeabi"
+				},
+				
+				{
+					"flags" : "  --target=armv5te-none-linux-androideabi --gcc-toolchain=C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64 --sysroot=C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\jni\\jni_include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\libs\\armeabi\\include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include\\backward  -isystem C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=14 -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security  -DTEST_CPP_FLAG2 -DTEST_CPP_FLAG2 -Os -DNDEBUG  -fPIC    -c ",
+					"src" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/src/main/jni/drm.cpp",
+					"workingDirectory" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/.externalNativeBuild/cmake/release/armeabi"
+				},
+				
+				{
+					"flags" : "  --target=armv5te-none-linux-androideabi --gcc-toolchain=C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64 --sysroot=C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\jni\\jni_include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\libs\\armeabi\\include -isystem C:\\Users\\syliu\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include\\backward  -isystem C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=14 -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv5te -mtune=xscale -msoft-float -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security  -DTEST_CPP_FLAG2 -DTEST_CPP_FLAG2 -Os -DNDEBUG  -fPIC    -c ",
+					"src" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/src/main/jni/spi.cpp",
+					"workingDirectory" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/.externalNativeBuild/cmake/release/armeabi"
+				}
+			],
+			"output" : "C:/UserZone/dev/androidStudioproject/ExoPlayer/library/irdeto/buildout/intermediates/cmake/release/obj/armeabi/libnative-lib.so",
+			"toolchain" : "1947160777"
+		}
+	},
+	"toolchains" : 
+	{
+		"1947160777" : 
+		{
+			"cCompilerExecutable" : "C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe",
+			"cppCompilerExecutable" : "C:/Users/syliu/AppData/Local/Android/Sdk/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe"
+		}
+	}
+}

@@ -1,0 +1,19 @@
+# ninja log v5
+29	433	0	CMakeFiles/native-lib.dir/src/main/jni/spi.cpp.o	7cb63df12ce5f1a0
+103	414	0	CMakeFiles/native-lib.dir/src/main/jni/drm.cpp.o	291fe90c774afc41
+4	621	0	CMakeFiles/native-lib.dir/src/main/jni/drm_jni.cpp.o	dec87be34e2c2ca7
+621	893	0	../../../../buildout/intermediates/cmake/debug/obj/armeabi/libnative-lib.so	782b0909a6ecee47
+16	303	0	CMakeFiles/native-lib.dir/src/main/jni/drm.cpp.o	291fe90c774afc41
+2	370	0	CMakeFiles/native-lib.dir/src/main/jni/drm_jni.cpp.o	dec87be34e2c2ca7
+370	484	0	../../../../buildout/intermediates/cmake/debug/obj/armeabi/libnative-lib.so	782b0909a6ecee47
+16	237	0	CMakeFiles/native-lib.dir/src/main/jni/drm.cpp.o	291fe90c774afc41
+2	303	0	CMakeFiles/native-lib.dir/src/main/jni/drm_jni.cpp.o	dec87be34e2c2ca7
+303	427	0	../../../../buildout/intermediates/cmake/debug/obj/armeabi/libnative-lib.so	782b0909a6ecee47
+7	1069	0	CMakeFiles/native-lib.dir/src/main/jni/drm.cpp.o	291fe90c774afc41
+1069	1504	0	../../../../buildout/intermediates/cmake/debug/obj/armeabi/libnative-lib.so	782b0909a6ecee47
+34	1104	0	CMakeFiles/native-lib.dir/src/main/jni/drm_jni.cpp.o	dec87be34e2c2ca7
+1104	1513	0	../../../../buildout/intermediates/cmake/debug/obj/armeabi/libnative-lib.so	782b0909a6ecee47
+2	309	0	CMakeFiles/native-lib.dir/src/main/jni/drm.cpp.o	291fe90c774afc41
+309	440	0	../../../../buildout/intermediates/cmake/debug/obj/armeabi/libnative-lib.so	782b0909a6ecee47
+16	923	0	CMakeFiles/native-lib.dir/src/main/jni/drm.cpp.o	291fe90c774afc41
+923	1254	0	../../../../buildout/intermediates/cmake/debug/obj/armeabi/libnative-lib.so	782b0909a6ecee47

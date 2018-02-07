@@ -420,7 +420,7 @@ public final class C {
    * Represents a streaming or other media type.
    */
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef({TYPE_DASH, TYPE_SS, TYPE_HLS, TYPE_OTHER})
+  @IntDef({TYPE_DASH, TYPE_SS, TYPE_HLS, TYPE_OTHER,TYPE_IRDETO_HLS})
   public @interface ContentType {}
   /**
    * Value returned by {@link Util#inferContentType(String)} for DASH manifests.
@@ -439,6 +439,8 @@ public final class C {
    * Smooth Streaming manifests.
    */
   public static final int TYPE_OTHER = 3;
+
+  public static final int TYPE_IRDETO_HLS = 4;
 
   /**
    * A return value for methods where the end of an input was encountered.
