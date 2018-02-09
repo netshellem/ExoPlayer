@@ -2,6 +2,7 @@ package com.irdeto.chinadrm.hls;
 
 import android.net.Uri;
 import android.os.SystemClock;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.source.BehindLiveWindowException;
@@ -94,15 +95,15 @@ import java.util.List;
     private TrackSelection trackSelection;
 
     /**
-     * @param playlistTracker The {@link HlsPlaylistTracker} from which to obtain media playlists.
-     * @param variants The available variants.
-     * @param dataSourceFactory An {@link HlsDataSourceFactory} to create {@link DataSource}s for the
-     *     chunks.
+     * @param playlistTracker           The {@link HlsPlaylistTracker} from which to obtain media playlists.
+     * @param variants                  The available variants.
+     * @param dataSourceFactory         An {@link HlsDataSourceFactory} to create {@link DataSource}s for the
+     *                                  chunks.
      * @param timestampAdjusterProvider A provider of {@link TimestampAdjuster} instances. If
-     *     multiple {@link HlsChunkSource}s are used for a single playback, they should all share the
-     *     same provider.
-     * @param muxedCaptionFormats List of muxed caption {@link Format}s. Null if no closed caption
-     *     information is available in the master playlist.
+     *                                  multiple {@link HlsChunkSource}s are used for a single playback, they should all share the
+     *                                  same provider.
+     * @param muxedCaptionFormats       List of muxed caption {@link Format}s. Null if no closed caption
+     *                                  information is available in the master playlist.
      */
     public HlsChunkSource(HlsPlaylistTracker playlistTracker, HlsUrl[] variants,
                           HlsDataSourceFactory dataSourceFactory, TimestampAdjusterProvider timestampAdjusterProvider,
@@ -173,12 +174,13 @@ import java.util.List;
      * Sets whether this chunk source is responsible for initializing timestamp adjusters.
      *
      * @param isTimestampMaster True if this chunk source is responsible for initializing timestamp
-     *     adjusters.
+     *                          adjusters.
      */
     public void setIsTimestampMaster(boolean isTimestampMaster) {
         this.isTimestampMaster = isTimestampMaster;
     }
-    private void acquireLicenseByUrl(String keyUri){
+
+    private void acquireLicenseByUrl(String keyUri) {
         if (this.drm != null) {
             //UserService userService = UserService.getInstance();
   /*          UserService userService = UserService.getInstance();
@@ -189,12 +191,13 @@ import java.util.List;
             if (userService != null && !userService.isOnline()) {
                 userService.login();
             }*/
-           // Session newsession = new Session();
+            // Session newsession = new Session();
 
-            int result = drm.native_acquireLicense(  keyUri.toString(), null);
+            int result = drm.native_acquireLicense(keyUri.toString(), null);
 
         }
     }
+
     /**
      * Returns the next chunk to load.
      * <p>
@@ -203,11 +206,11 @@ import java.util.List;
      * the end of the stream has not been reached, {@link HlsChunkHolder#playlist} is set to
      * contain the {@link HlsUrl} that refers to the playlist that needs refreshing.
      *
-     * @param previous The most recently loaded media chunk.
+     * @param previous           The most recently loaded media chunk.
      * @param playbackPositionUs The current playback position. If {@code previous} is null then this
-     *     parameter is the position from which playback is expected to start (or restart) and hence
-     *     should be interpreted as a seek position.
-     * @param out A holder to populate.
+     *                           parameter is the position from which playback is expected to start (or restart) and hence
+     *                           should be interpreted as a seek position.
+     * @param out                A holder to populate.
      */
     public void getNextChunk(HlsMediaChunk previous, long playbackPositionUs, HlsChunkHolder out) {
         int oldVariantIndex = previous == null ? C.INDEX_UNSET
@@ -280,16 +283,9 @@ import java.util.List;
         // Check if encryption is specified.
         if (segment.isEncrypted) {
             Uri keyUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, segment.encryptionKeyUri);
-            acquireLicenseByUrl(mediaPlaylist.chinaDrmLine);
-            //acquireLicenseByUrl();
-            if (!keyUri.equals(encryptionKeyUri)) {
-                // Encryption is specified and the key has changed.
-                out.chunk = newEncryptionKeyChunk(keyUri, segment.encryptionIV, selectedVariantIndex,
-                        trackSelection.getSelectionReason(), trackSelection.getSelectionData());
-                return;
-            }
-            if (!Util.areEqual(segment.encryptionIV, encryptionIvString)) {
-                setEncryptionData(keyUri, segment.encryptionIV, encryptionKey);
+            if (!keyUri.equals(encryptionKeyUri)){
+                acquireLicenseByUrl(mediaPlaylist.chinaDrmLine);
+                encryptionKeyUri = keyUri;
             }
         } else {
             clearEncryptionData();
@@ -317,7 +313,7 @@ import java.util.List;
         out.chunk = new HlsMediaChunk(mediaDataSource, dataSpec, initDataSpec, selectedUrl,
                 muxedCaptionFormats, trackSelection.getSelectionReason(), trackSelection.getSelectionData(),
                 startTimeUs, startTimeUs + segment.durationUs, chunkMediaSequence, discontinuitySequence,
-                isTimestampMaster, timestampAdjuster, previous, encryptionKey, encryptionIv);
+                isTimestampMaster, timestampAdjuster, previous, encryptionKey, encryptionIv, drm, mediaPlaylist.chinaDrmLine);
     }
 
     /**
@@ -339,9 +335,9 @@ import java.util.List;
      * Called when the {@link HlsSampleStreamWrapper} encounters an error loading a chunk obtained
      * from this source.
      *
-     * @param chunk The chunk whose load encountered the error.
+     * @param chunk      The chunk whose load encountered the error.
      * @param cancelable Whether the load can be canceled.
-     * @param error The error.
+     * @param error      The error.
      * @return Whether the load should be canceled.
      */
     public boolean onChunkLoadError(Chunk chunk, boolean cancelable, IOException error) {
@@ -352,7 +348,7 @@ import java.util.List;
     /**
      * Called when a playlist is blacklisted.
      *
-     * @param url The url that references the blacklisted playlist.
+     * @param url         The url that references the blacklisted playlist.
      * @param blacklistMs The amount of milliseconds for which the playlist was blacklisted.
      */
     public void onPlaylistBlacklisted(HlsUrl url, long blacklistMs) {
@@ -370,7 +366,6 @@ import java.util.List;
     private EncryptionKeyChunk newEncryptionKeyChunk(Uri keyUri, String iv, int variantIndex,
                                                      int trackSelectionReason, Object trackSelectionData) {
         DataSpec dataSpec = new DataSpec(keyUri, 0, C.LENGTH_UNSET, null, DataSpec.FLAG_ALLOW_GZIP);
-        //todo:change encryptionDataSource to IrdetoAes128DataSource
         return new EncryptionKeyChunk(encryptionDataSource, dataSpec, variants[variantIndex].format,
                 trackSelectionReason, trackSelectionData, scratchSpace, iv);
     }

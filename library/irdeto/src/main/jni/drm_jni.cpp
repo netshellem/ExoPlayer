@@ -2,6 +2,8 @@
 #include <string.h>
 #include <jni.h>
 #include <sys/time.h>
+#include <drm.h>
+#include <ac_drm_core.h>
 
 #include "ac_drm_core.h"
 #include "drm.h"
@@ -18,7 +20,7 @@
 #define _NATIVE_PLAY_DASH "native_play_dash"
 #define _NATIVE_ACQUIRELICENSE "native_acquireLicense"
 #define _NATIVE_ACQUIRELICENSEBYURL "native_acquireLicenseByUrl"
-#define _NATIVE_DECRYPTBUFFER "natice_decryptBuffer"
+#define _NATIVE_DECRYPTBUFFER "native_decryptBuffer"
 #define _NATIVE_SETFORCEQUIT "native_setForceQuit"
 
 #define TAG "drm_jni"
@@ -32,6 +34,8 @@ static drmContext gContext;
 static jmethodID MID_ERROR_NOTIFICATION = NULL;
 static jmethodID MID_DRM_AGENT_REQUEST = NULL;
 static jmethodID MID_DRM_REQUEST = NULL;
+
+static ac_drm_session_handle gSessionHandle = NULL;
 
 static jobject getConfigInstance(JNIEnv *env, jobject thiz)
 {
@@ -599,11 +603,98 @@ jstring Java_com_irdeto_drm_ChinaDrm_native_queryinfo(JNIEnv* env, jobject thiz,
     return strInfo;
 }
 
-jbyteArray Java_com_irdeto_drm_ChinaDrm_decryptBuffer(JNIEnv* env, jobject thiz, jbyteArray buffer,jboolean isFirstblock){
-    if (buffer == NULL)
+static ac_drm_ret decrypt(ac_drm_session_handle handle, ac_drm_byte* arr, ac_drm_uint32 length)
+{
+    ac_drm_decryptParameter decParameter = {0};
+    decParameter.final = AC_DRM_TRUE;
+
+    ac_drm_ret ret = AC_DRM_SUCCESS;
+
+    static ac_drm_byte_buffer buffer = {0};
+
+    if(length > 0){
+        LOGD("read... %d", length);
+        // decrypt data
+        LOGD("decryptBuffer {");
+        buffer.pData = arr;
+        buffer.dataSize = length;
+
+        ret = decryptBuffer(handle, &buffer, &decParameter);
+
+        LOGD("decryptBuffer } result = %d", ret);
+        if(buffer.dataSize!= length)
+            ret = AC_DRM_UNKNOWN_ERROR;
+        //memcpy(arr, buffer.pData, length);
+    }
+    return ret;
+}
+
+static ac_drm_ret destorySession(JNIEnv* env, jobject thiz){
+    ac_drm_ret result = AC_DRM_SUCCESS;
+
+    if (gSessionHandle != NULL) {
+        destroySession(gSessionHandle);
+    }
+    return result;
+}
+
+
+static ac_drm_ret createSessionHandle(JNIEnv* env, jobject thiz, jstring ecmData){
+    ac_drm_ret result = AC_DRM_SUCCESS;
+    ac_drm_byte_buffer drmMetadata = {0};
+    ac_drm_byte_buffer createSessionUserDataBuf = {0};
+    ac_drm_create_session_params createSessionParams = {0};
+
+    jobject configInstance = getConfigInstance(env, thiz);
+    jstring createSessionUserDataObj = getCreateSessionUserData(env, configInstance);
+    const ac_drm_byte *pCreateSessionUserData = (const ac_drm_byte *)env->GetStringUTFChars(createSessionUserDataObj, NULL);
+    drmMetadata.pData = (ecmData ? (ac_drm_byte *)env->GetStringUTFChars(ecmData, NULL) : NULL);
+    drmMetadata.dataSize = (ecmData ? SPI_strlen((const ac_drm_char *)drmMetadata.pData) + 1 : 0);
+
+    createSessionUserDataBuf.pData = (ac_drm_byte *)pCreateSessionUserData;
+    createSessionUserDataBuf.dataSize = strlen((const ac_drm_char *)pCreateSessionUserData) + 1;
+
+    createSessionParams.metadataType = AC_DRM_METADATA_CHINADRM_HLS;
+    createSessionParams.pDrmMetadata = &drmMetadata;
+    createSessionParams.pUserData = (createSessionUserDataBuf.dataSize == 1) ? NULL : &createSessionUserDataBuf;
+
+    result = createSession(&createSessionParams, &gSessionHandle, AC_DRM_FALSE);
+
+    if (createSessionUserDataBuf.pData) env->ReleaseStringUTFChars( createSessionUserDataObj, (ac_drm_char *)createSessionUserDataBuf.pData);
+    if (drmMetadata.pData) env->ReleaseStringUTFChars( ecmData, (ac_drm_char *)drmMetadata.pData);
+    return result;
+}
+
+jbyteArray Java_com_irdeto_drm_ChinaDrm_decryptBuffer(JNIEnv* env, jobject thiz, jbyteArray buffer, jstring ecmData){
+    LOGD("decryptBuffer");
+    ac_drm_ret result = AC_DRM_SUCCESS;
+    ac_drm_uint32 len = 0;
+    ac_drm_ret ret = AC_DRM_SUCCESS;
+
+    ac_drm_byte_buffer drmMetadata = {0};
+    drmMetadata.pData = (ecmData ? (ac_drm_byte *)env->GetStringUTFChars(ecmData, NULL) : NULL);
+    drmMetadata.dataSize = (ecmData ? SPI_strlen((const ac_drm_char *)drmMetadata.pData) + 1 : 0);
+    //todo: add session handle
+    if(gSessionHandle == NULL){
+        if(createSessionHandle(env, thiz, ecmData) != AC_DRM_SUCCESS)
+            return NULL;
+    } else{
+        result = updateSession(gSessionHandle, &drmMetadata, AC_DRM_METADATA_CHINADRM_HLS);
+    }
+    jbyte *c_array =env->GetByteArrayElements(buffer, 0);
+    int len_arr = env->GetArrayLength(buffer);
+    ret = decrypt(gSessionHandle,(ac_drm_byte *)c_array, len_arr);
+    if(ret != AC_DRM_SUCCESS) {
+        env->ReleaseByteArrayElements(buffer, c_array, 0);
+        if (drmMetadata.pData) env->ReleaseStringUTFChars( ecmData, (ac_drm_char *)drmMetadata.pData);
         return NULL;
-    if (buffer)
-    LOGD("decryptBuffer {");
+    }
+    jbyteArray c_result = env->NewByteArray(len_arr);
+    jbyte buf[len_arr];
+    memcpy(buf, c_array, len_arr);
+    env->ReleaseByteArrayElements(buffer, c_array, 0);
+    env->SetByteArrayRegion(c_result, 0, len_arr, buf);
+    return c_result;
 
 }
 
@@ -616,7 +707,7 @@ static JNINativeMethod g_methods[] = {
         { _NATIVE_QUERY_INFO, "(Ljava/lang/String;)Ljava/lang/String;", (void*) Java_com_irdeto_drm_ChinaDrm_native_queryinfo },
         { _NATIVE_ACQUIRELICENSE, "(Ljava/lang/String;Ljava/lang/String;)I", (void*) Java_com_irdeto_drm_ChinaDrm_native_acquireLicense },
         { _NATIVE_ACQUIRELICENSEBYURL, "(Ljava/lang/String;Ljava/lang/String;)I", (void*) Java_com_irdeto_drm_ChinaDrm_native_acquireLicenseByUrl },
-        {_NATIVE_DECRYPTBUFFER,"([B)[B",(void *) Java_com_irdeto_drm_ChinaDrm_decryptBuffer},
+        {_NATIVE_DECRYPTBUFFER,"([BLjava/lang/String;)[B",(void *) Java_com_irdeto_drm_ChinaDrm_decryptBuffer},
         { _NATIVE_SETFORCEQUIT, "()I", (void*) Java_com_irdeto_drm_ChinaDrm_native_setForceQuit }
 };
 

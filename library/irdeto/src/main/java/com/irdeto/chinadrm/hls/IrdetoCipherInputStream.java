@@ -18,11 +18,12 @@ public class IrdetoCipherInputStream extends FilterInputStream {
     private boolean finished;
     private ChinaDrm drm;
     private byte[] m_result;
+    private String line;
 
-    public IrdetoCipherInputStream(InputStream is, ChinaDrm drm) {
+    public IrdetoCipherInputStream(InputStream is, ChinaDrm drm, String line) {
         super(is);
         this.drm = drm;
-
+        this.line = line;
     }
 
     /**
@@ -63,26 +64,37 @@ public class IrdetoCipherInputStream extends FilterInputStream {
     }
 
     byte[] concat(byte[] a, byte[] b) {
-        byte[] c = com.google.common.primitives.Bytes.concat(a, b);
-        return c;
+        return com.google.common.primitives.Bytes.concat(a, b);
     }
     //todo: need to improve performance for inputstream
     private byte[] doFinal(){
         //native decrypt
         int len = m_result.length;
 
-        return this.drm.native_decryptBuffer(m_result);
+        return this.drm.native_decryptBuffer( m_result, line);
         //return null;
     }
 
     //todo: need to improve performance for inputstream
     private byte[] update(byte[] input, int offset, int inputLen){
+        byte[] ret;
         byte[] trim_input = new byte[inputLen];
         System.arraycopy(input, offset, trim_input,0, inputLen);
-        if(m_result == null)
+        if(m_result == null) {
             m_result = trim_input;
+        }
         else
+        {
             m_result = concat(m_result, trim_input);
+            if(m_result.length > 0 && (m_result.length%16 == 0)) {
+                if((ret = this.drm.native_decryptBuffer( m_result, line)) != null)
+                {
+                    m_result = null;
+                    return ret;
+                }
+
+            }
+        }
         return null;
     }
     /**
@@ -167,8 +179,8 @@ public class IrdetoCipherInputStream extends FilterInputStream {
         in.close();
 
         //todo: close file handler
-        IOException e = new IOException();
-        throw e;
+       // IOException e = new IOException();
+       // throw e;
     }
     /**
      * Returns whether this input stream supports {@code mark} and

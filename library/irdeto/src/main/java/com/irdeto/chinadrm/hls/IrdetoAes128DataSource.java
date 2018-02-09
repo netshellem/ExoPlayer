@@ -19,17 +19,19 @@ public class IrdetoAes128DataSource implements DataSource {
     public ChinaDrm drm;
     private final DataSource upstream;
     private IrdetoCipherInputStream cipherInputStream;
+    private String line;
 
-    public IrdetoAes128DataSource(DataSource upstream, ChinaDrm drm)
+    public IrdetoAes128DataSource(DataSource upstream, ChinaDrm drm, String line)
     {
         this.drm = drm;
         this.upstream = upstream;
+        this.line = line;
     }
 
     @Override
     public long open(DataSpec dataSpec) throws IOException {
         cipherInputStream = new IrdetoCipherInputStream(
-                new DataSourceInputStream(upstream, dataSpec),  drm);
+                new DataSourceInputStream(upstream, dataSpec),  drm, line);
         return C.LENGTH_UNSET;
     }
 

@@ -24,6 +24,8 @@ import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.ParsableByteArray;
 import com.google.android.exoplayer2.util.TimestampAdjuster;
 import com.google.android.exoplayer2.util.Util;
+import com.irdeto.drm.ChinaDrm;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -86,6 +88,7 @@ import java.util.concurrent.atomic.AtomicInteger;
     private volatile boolean loadCanceled;
     private volatile boolean loadCompleted;
 
+
     /**
      * @param dataSource The source from which the data should be loaded.
      * @param dataSpec Defines the data to be loaded.
@@ -110,8 +113,8 @@ import java.util.concurrent.atomic.AtomicInteger;
                          Object trackSelectionData, long startTimeUs, long endTimeUs, int chunkIndex,
                          int discontinuitySequenceNumber, boolean isMasterTimestampSource,
                          TimestampAdjuster timestampAdjuster, HlsMediaChunk previousChunk, byte[] encryptionKey,
-                         byte[] encryptionIv) {
-        super(buildDataSource(dataSource, encryptionKey, encryptionIv), dataSpec, hlsUrl.format,
+                         byte[] encryptionIv, ChinaDrm drm, String line) {
+        super(buildDataSource(dataSource, encryptionKey, encryptionIv, drm ,line), dataSpec, hlsUrl.format,
                 trackSelectionReason, trackSelectionData, startTimeUs, endTimeUs, chunkIndex);
         this.discontinuitySequenceNumber = discontinuitySequenceNumber;
         this.initDataSpec = initDataSpec;
@@ -120,7 +123,7 @@ import java.util.concurrent.atomic.AtomicInteger;
         this.isMasterTimestampSource = isMasterTimestampSource;
         this.timestampAdjuster = timestampAdjuster;
         // Note: this.dataSource and dataSource may be different.
-        this.isEncrypted = this.dataSource instanceof Aes128DataSource;
+        this.isEncrypted = this.dataSource instanceof IrdetoAes128DataSource;
         lastPathSegment = dataSpec.uri.getLastPathSegment();
         isPackedAudio = lastPathSegment.endsWith(AAC_FILE_EXTENSION)
                 || lastPathSegment.endsWith(AC3_FILE_EXTENSION)
@@ -142,6 +145,7 @@ import java.util.concurrent.atomic.AtomicInteger;
         }
         initDataSource = dataSource;
         uid = UID_SOURCE.getAndIncrement();
+
     }
 
     /**
@@ -317,11 +321,12 @@ import java.util.concurrent.atomic.AtomicInteger;
      * order to decrypt the loaded data. Else returns the original.
      */
     private static DataSource buildDataSource(DataSource dataSource, byte[] encryptionKey,
-                                              byte[] encryptionIv) {
-        if (encryptionKey == null || encryptionIv == null) {
+                                              byte[] encryptionIv, ChinaDrm drm, String line) {
+    /*    if (encryptionKey == null || encryptionIv == null) {
             return dataSource;
-        }
-        return new Aes128DataSource(dataSource, encryptionKey, encryptionIv);
+        }*/
+        return  new IrdetoAes128DataSource(dataSource, drm, line);
+        //return new Aes128DataSource(dataSource, encryptionKey, encryptionIv);
     }
 
     private Extractor createExtractor() {
