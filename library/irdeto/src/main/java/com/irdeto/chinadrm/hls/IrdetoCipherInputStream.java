@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public class IrdetoCipherInputStream extends FilterInputStream {
 
-    private final int I_BUFFER_SIZE = 20;
+    private final int I_BUFFER_SIZE = 16;
     private final byte[] i_buffer = new byte[I_BUFFER_SIZE];
     private int index; // index of the bytes to return from o_buffer
     private byte[] o_buffer;
@@ -86,13 +86,12 @@ public class IrdetoCipherInputStream extends FilterInputStream {
         else
         {
             m_result = concat(m_result, trim_input);
-            if(m_result.length > 0 && (m_result.length%16 == 0)) {
-                if((ret = this.drm.native_decryptBuffer( m_result, line)) != null)
-                {
+            if( m_result.length > 0 && (m_result.length >= 512) && (m_result.length %16 == 0)) {
+                ret = this.drm.native_decryptBuffer( m_result, line);
+                if(ret !=  null) {
                     m_result = null;
                     return ret;
                 }
-
             }
         }
         return null;
