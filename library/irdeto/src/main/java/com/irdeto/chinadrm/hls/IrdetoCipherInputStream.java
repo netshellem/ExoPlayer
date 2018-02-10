@@ -86,7 +86,7 @@ public class IrdetoCipherInputStream extends FilterInputStream {
         else
         {
             m_result = concat(m_result, trim_input);
-           if (m_result.length >=  2048) {
+           if (m_result.length >=  20480) {
            // if (m_result.length > 0){
                 ret = this.drm.decryptBuffer( m_result, line, false);
                 if(ret !=  null) {
