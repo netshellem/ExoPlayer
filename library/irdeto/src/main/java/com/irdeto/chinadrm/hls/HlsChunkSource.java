@@ -193,7 +193,7 @@ import java.util.List;
             }*/
             // Session newsession = new Session();
 
-            int result = drm.native_acquireLicense(keyUri.toString(), null);
+            int result = drm.acquireLicense(keyUri.toString(), null);
 
         }
     }

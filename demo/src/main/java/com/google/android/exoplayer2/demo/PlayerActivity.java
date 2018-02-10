@@ -376,9 +376,10 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
       case C.TYPE_IRDETO_HLS:
        String signFile="acv.dat";
        String configFile="cdrm_config.dat";
+       // String ssFile="cdrm_asset.dat";
         Utility.copySecureFile(this,signFile,Utility.getSecurePath(this)+signFile);
         Utility.copySecureFile(this,configFile,Utility.getSecurePath(this)+configFile);
-       // Utility.copySecureFile(this,configFile,Utility.getSecurePath(this)+ssFile);
+        //Utility.copySecureFile(this,configFile,Utility.getSecurePath(this)+ssFile);
         String securePath = Utility.getSecurePath(this);
         final ChinaDrm drm = new ChinaDrm(this, securePath, DeviceInfo.getInstance(this));
          new Thread(new Runnable() {

@@ -71,7 +71,7 @@ public class IrdetoCipherInputStream extends FilterInputStream {
         //native decrypt
         int len = m_result.length;
 
-        return this.drm.native_decryptBuffer( m_result, line);
+        return this.drm.decryptBuffer( m_result, line, true);
         //return null;
     }
 
@@ -86,8 +86,9 @@ public class IrdetoCipherInputStream extends FilterInputStream {
         else
         {
             m_result = concat(m_result, trim_input);
-            if( m_result.length > 0 && (m_result.length >= 512) && (m_result.length %16 == 0)) {
-                ret = this.drm.native_decryptBuffer( m_result, line);
+           if (m_result.length >=  2048) {
+           // if (m_result.length > 0){
+                ret = this.drm.decryptBuffer( m_result, line, false);
                 if(ret !=  null) {
                     m_result = null;
                     return ret;
@@ -176,10 +177,11 @@ public class IrdetoCipherInputStream extends FilterInputStream {
     @Override
     public void close() throws IOException {
         in.close();
+        try {
+            o_buffer = doFinal();
+        } catch (Exception e) {
+        }
 
-        //todo: close file handler
-       // IOException e = new IOException();
-       // throw e;
     }
     /**
      * Returns whether this input stream supports {@code mark} and

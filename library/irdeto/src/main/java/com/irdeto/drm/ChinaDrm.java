@@ -219,95 +219,25 @@ public class ChinaDrm {
 
     public int acquireLicenseByUrl(Session session, String ecmData) {
         this.session = session;
-
         Log.d(TAG, "acquireLicense by URL: " + ecmData);
-        // return native_acquireLicenseByUrl(ecmData, securePath);
         return native_acquireLicenseByUrl(ecmData, null);
     }
-/*
-@SuppressWarnings({ "deprecation", "unused" })
-public class ChinaDrm {
 
-
-
-    public int play(Session session, String filename, boolean isLocal) {
-        String ecmData = null;
-        String tsName = null;
-        this.session = session;
-
-        try {
-            FileInputStream stream = new FileInputStream(filename);
-            byte[] nData = new byte[stream.available()];
-            stream.read(nData);
-            stream.close();
-
-            //extract #EXT-X-KEY from manifest
-            if (nData != null) {
-                String[]  lines = new String(nData).split("\n");
-                for (int i=0; i< lines.length; i++) {
-                    if (lines[i].startsWith("#EXT-X-KEY")) {
-                        ecmData = lines[i].trim();
-                    }
-                    if (!lines[i].startsWith("#") && lines[i].endsWith(".ts")) {
-                        tsName = filename.substring(0, filename.lastIndexOf("/")+1) + lines[i].trim();
-                    }
-                    if (ecmData != null && tsName!=null){
-                        break;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.d(TAG, "get ECM failed");
-        }
-
-        Log.d(TAG, "get ECM: " + ecmData + ", get TS: " + tsName);
-
-        if (isLocal) {
-            return native_play_local(ecmData, tsName);
-        } else {
-            return native_play(ecmData, tsName);
-        }
+    public void createSession(String ecmData) {
+        native_createsession(ecmData);
     }
 
-    public String playDash(Session session) {
-        this.session = session;
-        return native_play_dash();
+    public  int acquireLicense(String ecmData, String dataPath){
+        return native_acquireLicense(ecmData, dataPath);
     }
 
-
-
-    public String queryInfo(Session session, String filename) {
-        this.session = session;
-        String ecmData = null;
-
-        try{
-            FileInputStream stream = new FileInputStream(filename);
-            byte[] nData = new byte[stream.available()];
-            stream.read(nData);
-            stream.close();
-
-            //extract #EXT-X-KEY from manifest
-            if (nData != null) {
-                String[]  lines = new String(nData).split("\n");
-                for (int i=0; i< lines.length; i++) {
-                    if (lines[i].startsWith("#EXT-X-KEY")) {
-                        ecmData = lines[i].trim();
-                        break;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.d(TAG, "get ECM failed");
-        }
-
-        Log.d(TAG, "queryInfo with ECM: " + ecmData);
-        return native_queryinfo(ecmData);
+    public void destorySession() {
+        native_destorysession();
     }
 
-    public int setForceQuit() {
-        return native_setForceQuit();
+    public byte[] decryptBuffer( byte[] data,  String chinaDrmLine, boolean isFinal){
+        return  native_decryptBuffer(  data,  chinaDrmLine, isFinal);
     }
-*/
     static {
         try {
             System.loadLibrary("native-lib");
@@ -333,8 +263,11 @@ public class ChinaDrm {
 
     public native int native_acquireLicenseByUrl(String ecmData, String dataPath);
 
-    //public native byte[] native_decryptBuffer( byte[] data);
-    public native byte[] native_decryptBuffer( byte[] data,  String chinaDrmLine);
+    public native byte[] native_decryptBuffer( byte[] data,  String chinaDrmLine, boolean isFinal);
+
+    public native void native_createsession( String ecmData);
+
+    public native void native_destorysession();
 
     public native int native_setForceQuit();
 

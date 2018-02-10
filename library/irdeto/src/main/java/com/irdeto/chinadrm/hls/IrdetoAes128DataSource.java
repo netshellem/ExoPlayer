@@ -11,10 +11,6 @@ import com.irdeto.drm.ChinaDrm;
 
 import java.io.IOException;
 
-/**
- * Created by Syliu on 06-02-2018.
- */
-
 public class IrdetoAes128DataSource implements DataSource {
     public ChinaDrm drm;
     private final DataSource upstream;
@@ -53,6 +49,6 @@ public class IrdetoAes128DataSource implements DataSource {
 
     @Override
     public void close() throws IOException {
-        //todo:donothing?
+        drm.destorySession();
     }
 }
