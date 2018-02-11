@@ -605,10 +605,10 @@ jstring Java_com_irdeto_drm_ChinaDrm_native_queryinfo(JNIEnv* env, jobject thiz,
     return strInfo;
 }
 
-static ac_drm_ret decrypt(ac_drm_session_handle handle, ac_drm_byte* arr, ac_drm_uint32 length, jboolean isFinal )
+static ac_drm_ret decrypt(ac_drm_session_handle handle, ac_drm_byte* arr, ac_drm_uint32 length, jboolean isFinal, int* puffer_decrypted_size )
 {
     ac_drm_decryptParameter decParameter = {0};
-    memcpy(decParameter.iv, gDecryptParameter.iv, 16);
+    //memcpy(decParameter.iv, gDecryptParameter.iv, 16);
     if(isFinal){
         decParameter.final = AC_DRM_TRUE;
     }
@@ -618,21 +618,21 @@ static ac_drm_ret decrypt(ac_drm_session_handle handle, ac_drm_byte* arr, ac_drm
 
     ac_drm_ret ret = AC_DRM_SUCCESS;
 
-    static ac_drm_byte_buffer buffer = {0};
+    ac_drm_byte_buffer buffer = {0};
 
     if(length > 0){
-        LOGD("read... %d", length);
+        //LOGD("read... %d", length);
         // decrypt data
-        LOGD("decryptBuffer {");
+        //LOGD("decryptBuffer {");
         buffer.pData = arr;
         buffer.dataSize = length;
 
         ret = decryptBuffer(handle, &buffer, &decParameter);
-        memcpy(gDecryptParameter.iv, decParameter.iv,16);
-       // gDecryptParameter.iv_size = decParameter.iv_size;
-        LOGD("decryptBuffer } result = %d", ret);
-        if(buffer.dataSize!= length)
-            ret = AC_DRM_UNKNOWN_ERROR;
+        //memcpy(gDecryptParameter.iv, decParameter.iv,16);
+        //LOGD("decryptBuffer } result = %d", ret);
+        /*if(buffer.dataSize!= length)
+            ret = AC_DRM_UNKNOWN_ERROR;*/
+        *puffer_decrypted_size = buffer.dataSize;
     }
     return ret;
 }
@@ -680,34 +680,43 @@ void Java_com_irdeto_ChinaDrm_createSession(JNIEnv* env, jobject thiz, jstring e
 }
 
 jbyteArray Java_com_irdeto_drm_ChinaDrm_decryptBuffer(JNIEnv* env, jobject thiz, jbyteArray buffer, jstring ecmData, jboolean isFinal){
-    LOGD("decryptBuffer");
+    //LOGD("decryptBuffer");
     ac_drm_uint32 len = 0;
     ac_drm_ret ret = AC_DRM_SUCCESS;
+    int decrypt_size = 0;
 
     ac_drm_byte_buffer drmMetadata = {0};
     drmMetadata.pData = (ecmData ? (ac_drm_byte *)env->GetStringUTFChars(ecmData, NULL) : NULL);
     drmMetadata.dataSize = (ecmData ? SPI_strlen((const ac_drm_char *)drmMetadata.pData) + 1 : 0);
 
     if(gSessionHandle == NULL){
+       // drmMetadata.pData = (ecmData ? (ac_drm_byte *)env->GetStringUTFChars(ecmData, NULL) : NULL);
+        //drmMetadata.dataSize = (ecmData ? SPI_strlen((const ac_drm_char *)drmMetadata.pData) + 1 : 0);
         if(createSessionHandle(env, thiz, ecmData) != AC_DRM_SUCCESS)
             return NULL;
     } else{
-        ret = updateSession(gSessionHandle, &drmMetadata, AC_DRM_METADATA_CHINADRM_HLS);
+       // ret = updateSession(gSessionHandle, &drmMetadata, AC_DRM_METADATA_CHINADRM_HLS);
+    }
+    if(ret != AC_DRM_SUCCESS) {
+        return NULL;
     }
     jbyte *c_array =env->GetByteArrayElements(buffer, 0);
     int len_arr = env->GetArrayLength(buffer);
-    jbyte buf[len_arr];
-    ret = decrypt(gSessionHandle,(ac_drm_byte *)c_array, len_arr,isFinal);
+    ret = decrypt(gSessionHandle,(ac_drm_byte *)c_array, len_arr,isFinal,&decrypt_size);
     if(ret != AC_DRM_SUCCESS) {
         env->ReleaseByteArrayElements(buffer, c_array, 0);
         if (drmMetadata.pData) env->ReleaseStringUTFChars( ecmData, (ac_drm_char *)drmMetadata.pData);
         return NULL;
     }
-    jbyteArray c_result = env->NewByteArray(len_arr);
 
-    memcpy(buf, c_array, len_arr);
+    if(isFinal){
+        ret = updateSession(gSessionHandle, &drmMetadata, AC_DRM_METADATA_CHINADRM_HLS);
+    }
+    jbyteArray c_result = env->NewByteArray(decrypt_size);
+
+    env->SetByteArrayRegion(c_result, 0, decrypt_size, c_array);
     env->ReleaseByteArrayElements(buffer, c_array, 0);
-    env->SetByteArrayRegion(c_result, 0, len_arr, buf);
+    //env->DeleteLocalRef(c_result);
     return c_result;
 
 }

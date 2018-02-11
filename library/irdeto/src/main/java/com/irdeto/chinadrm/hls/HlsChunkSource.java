@@ -310,6 +310,7 @@ import java.util.List;
         Uri chunkUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, segment.url);
         DataSpec dataSpec = new DataSpec(chunkUri, segment.byterangeOffset, segment.byterangeLength,
                 null);
+
         out.chunk = new HlsMediaChunk(mediaDataSource, dataSpec, initDataSpec, selectedUrl,
                 muxedCaptionFormats, trackSelection.getSelectionReason(), trackSelection.getSelectionData(),
                 startTimeUs, startTimeUs + segment.durationUs, chunkMediaSequence, discontinuitySequence,

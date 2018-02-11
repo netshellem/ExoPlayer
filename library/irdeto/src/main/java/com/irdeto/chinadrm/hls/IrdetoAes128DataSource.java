@@ -49,6 +49,8 @@ public class IrdetoAes128DataSource implements DataSource {
 
     @Override
     public void close() throws IOException {
+        cipherInputStream = null;
+        upstream.close();
         drm.destorySession();
     }
 }

@@ -17,7 +17,10 @@ public class IrdetoCipherInputStream extends FilterInputStream {
     private byte[] o_buffer;
     private boolean finished;
     private ChinaDrm drm;
-    private byte[] m_result;
+    private int DECRYPT_BUFFER_LENGTH=752;//22560;
+    private byte[] m_result=new byte[DECRYPT_BUFFER_LENGTH];
+    private int buffer_index = 0;
+
     private String line;
 
     public IrdetoCipherInputStream(InputStream is, ChinaDrm drm, String line) {
@@ -34,12 +37,13 @@ public class IrdetoCipherInputStream extends FilterInputStream {
      *             if an error occurs.
      */
     @Override
-    //todo: call netive method to decrypt buffer
     public int read() throws IOException {
         if (finished) {
-            return ((o_buffer == null) || (index == o_buffer.length))
-                    ? -1
-                    : o_buffer[index++] & 0xFF;
+            if ((o_buffer == null) || (index == o_buffer.length)) {
+                o_buffer = null;
+                return -1;
+            } else
+                    return o_buffer[index++] & 0xFF;
         }
         if ((o_buffer != null) && (index < o_buffer.length)) {
             return o_buffer[index++] & 0xFF;
@@ -63,34 +67,35 @@ public class IrdetoCipherInputStream extends FilterInputStream {
         return read();
     }
 
-    byte[] concat(byte[] a, byte[] b) {
-        return com.google.common.primitives.Bytes.concat(a, b);
-    }
-    //todo: need to improve performance for inputstream
+
     private byte[] doFinal(){
-        //native decrypt
-        int len = m_result.length;
-
-        return this.drm.decryptBuffer( m_result, line, true);
-        //return null;
+        byte[] ret;
+        int len = buffer_index ;
+        byte[] tmp = new byte[len];
+        System.arraycopy(m_result, 0, tmp, 0, len );
+        ret= this.drm.decryptBuffer( tmp, line, true);
+        buffer_index = 0;
+        return ret;
     }
 
-    //todo: need to improve performance for inputstream
     private byte[] update(byte[] input, int offset, int inputLen){
         byte[] ret;
-        byte[] trim_input = new byte[inputLen];
-        System.arraycopy(input, offset, trim_input,0, inputLen);
-        if(m_result == null) {
-            m_result = trim_input;
+        //byte[] trim_input = new byte[inputLen];
+       // System.arraycopy(input, offset, trim_input,0, inputLen);
+        if(buffer_index == 0) {
+            //m_result = trim_input;
+            System.arraycopy(input, offset, m_result, 0, inputLen);
+            buffer_index = inputLen;
         }
         else
         {
-            m_result = concat(m_result, trim_input);
-           if (m_result.length >=  20480) {
-           // if (m_result.length > 0){
+            //m_result = concat(m_result, trim_input);
+            System.arraycopy(input, offset, m_result, buffer_index, inputLen);
+            buffer_index += inputLen;
+           if (buffer_index >=  DECRYPT_BUFFER_LENGTH) {
                 ret = this.drm.decryptBuffer( m_result, line, false);
                 if(ret !=  null) {
-                    m_result = null;
+                    buffer_index = 0;
                     return ret;
                 }
             }
