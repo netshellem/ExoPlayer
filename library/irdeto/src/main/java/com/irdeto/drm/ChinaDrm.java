@@ -251,13 +251,13 @@ public class ChinaDrm {
 
     public native int native_shutdown();
 
-    public native int native_play(String ecmData, String dataFile);
+/*    public native int native_play(String ecmData, String dataFile);
 
-    public native int native_play_local(String ecmData, String dataFile);
+    public native int native_play_local(String ecmData, String dataFile);*/
 
     public native void native_initIDs();
 
-    public native String native_queryinfo(String ecmData);
+/*    public native String native_queryinfo(String ecmData);*/
 
     public native int native_acquireLicense(String ecmData, String dataPath);
 

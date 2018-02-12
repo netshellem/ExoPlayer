@@ -17,8 +17,7 @@ public class IrdetoAes128DataSource implements DataSource {
     private IrdetoCipherInputStream cipherInputStream;
     private String line;
 
-    public IrdetoAes128DataSource(DataSource upstream, ChinaDrm drm, String line)
-    {
+    public IrdetoAes128DataSource(DataSource upstream, ChinaDrm drm, String line){
         this.drm = drm;
         this.upstream = upstream;
         this.line = line;
@@ -28,6 +27,8 @@ public class IrdetoAes128DataSource implements DataSource {
     public long open(DataSpec dataSpec) throws IOException {
         cipherInputStream = new IrdetoCipherInputStream(
                 new DataSourceInputStream(upstream, dataSpec),  drm, line);
+        //create ChinaDrm Session
+        drm.createSession(line);
         return C.LENGTH_UNSET;
     }
 
@@ -39,7 +40,6 @@ public class IrdetoAes128DataSource implements DataSource {
             return C.RESULT_END_OF_INPUT;
         }
         return bytesRead;
-
     }
 
     @Override
@@ -51,6 +51,7 @@ public class IrdetoAes128DataSource implements DataSource {
     public void close() throws IOException {
         cipherInputStream = null;
         upstream.close();
+        //destory session
         drm.destorySession();
     }
 }

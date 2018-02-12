@@ -17,7 +17,7 @@ public class IrdetoCipherInputStream extends FilterInputStream {
     private byte[] o_buffer;
     private boolean finished;
     private ChinaDrm drm;
-    private int DECRYPT_BUFFER_LENGTH=752;//22560;
+    private int DECRYPT_BUFFER_LENGTH=752;//gcd=(188,16)
     private byte[] m_result=new byte[DECRYPT_BUFFER_LENGTH];
     private int buffer_index = 0;
 
@@ -80,16 +80,12 @@ public class IrdetoCipherInputStream extends FilterInputStream {
 
     private byte[] update(byte[] input, int offset, int inputLen){
         byte[] ret;
-        //byte[] trim_input = new byte[inputLen];
-       // System.arraycopy(input, offset, trim_input,0, inputLen);
         if(buffer_index == 0) {
-            //m_result = trim_input;
             System.arraycopy(input, offset, m_result, 0, inputLen);
             buffer_index = inputLen;
         }
         else
         {
-            //m_result = concat(m_result, trim_input);
             System.arraycopy(input, offset, m_result, buffer_index, inputLen);
             buffer_index += inputLen;
            if (buffer_index >=  DECRYPT_BUFFER_LENGTH) {
