@@ -180,24 +180,6 @@ import java.util.List;
         this.isTimestampMaster = isTimestampMaster;
     }
 
-    private void acquireLicenseByUrl(String keyUri) {
-        if (this.drm != null) {
-            //UserService userService = UserService.getInstance();
-  /*          UserService userService = UserService.getInstance();
-            SessionManager sessionManager = SessionManager.getInstance();
-            //todo: get skai RRM url to
-            Session newSession = sessionManager.getSession("skai", "RRM_URL");
-            userService.setSession(newSession);
-            if (userService != null && !userService.isOnline()) {
-                userService.login();
-            }*/
-            // Session newsession = new Session();
-
-            int result = drm.acquireLicense(keyUri.toString(), null);
-
-        }
-    }
-
     /**
      * Returns the next chunk to load.
      * <p>
@@ -284,7 +266,8 @@ import java.util.List;
         if (segment.isEncrypted) {
             Uri keyUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, segment.encryptionKeyUri);
             if (!keyUri.equals(encryptionKeyUri)){
-                acquireLicenseByUrl(mediaPlaylist.chinaDrmLine);
+                if(drm != null)
+                    drm.acquireLicense(keyUri.toString(), null);
                 encryptionKeyUri = keyUri;
             }
         } else {

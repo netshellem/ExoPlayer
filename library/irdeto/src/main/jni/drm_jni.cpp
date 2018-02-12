@@ -14,10 +14,7 @@
 #define _NATIVE_INITIDS "native_initIDs"
 #define _NATIVE_STARTUP "native_startup"
 #define _NATIVE_SHUTDOWN "native_shutdown"
-#define _NATIVE_PLAY "native_play"
-#define _NATIVE_PLAY_LOCAL "native_play_local"
-#define _NATIVE_QUERY_INFO "native_queryinfo"
-#define _NATIVE_PLAY_DASH "native_play_dash"
+
 #define _NATIVE_ACQUIRELICENSE "native_acquireLicense"
 #define _NATIVE_ACQUIRELICENSEBYURL "native_acquireLicenseByUrl"
 #define _NATIVE_DECRYPTBUFFER "native_decryptBuffer"
@@ -38,7 +35,7 @@ static jmethodID MID_DRM_AGENT_REQUEST = NULL;
 static jmethodID MID_DRM_REQUEST = NULL;
 
 static ac_drm_session_handle gSessionHandle = NULL;
-static ac_drm_decryptParameter gDecryptParameter;
+
 static jobject getConfigInstance(JNIEnv *env, jobject thiz)
 {
     jclass cls = env->GetObjectClass(thiz);
@@ -234,66 +231,6 @@ static int getCurrentTime() {
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
-#define DECYPT_BLOCK_SIZE 752
-static ac_drm_ret play(ac_drm_session_handle handle, const ac_drm_char* pDataFile) {
-    ac_drm_ret ret = AC_DRM_SUCCESS;
-    // open data File
-    FILE *pSrcFile = NULL;
-    FILE *pDstFile = NULL;
-    ac_drm_uint32 len = 0;
-    static ac_drm_char ss[1024]= {0};
-    static ac_drm_byte array[DECYPT_BLOCK_SIZE] = {0};
-    static ac_drm_byte_buffer buffer = {0};
-
-    ac_drm_decryptParameter decParameter = {0};
-    int current = 0;
-
-    decParameter.final = AC_DRM_TRUE;
-
-    current = getCurrentTime();
-
-    LOGD("play {");
-    sprintf(ss, "%s_%d.clear", pDataFile, current);
-
-    pSrcFile = fopen(pDataFile, "rb");
-    pDstFile = fopen(ss, "wb");
-    if (pSrcFile == NULL) {
-        LOGD("can not open such file:%s", pDataFile);
-        ret = AC_DRM_UNKNOWN_ERROR;
-    }
-
-    if (pDstFile == NULL) {
-        LOGD("can not open such file:%s", ss);
-        ret = AC_DRM_UNKNOWN_ERROR;
-    }
-
-    while(ret == AC_DRM_SUCCESS && ((len = fread(array, 1, DECYPT_BLOCK_SIZE, pSrcFile)) > 0)) {
-        LOGD("read... %d", len);
-        // decrypt data
-        LOGD("decryptBuffer {");
-        buffer.pData = (ac_drm_byte *)(array);
-        buffer.dataSize = len;
-
-        ret = decryptBuffer(handle, &buffer, &decParameter);
-        LOGD("decryptBuffer } result = %d", ret);
-        if (fwrite(array, 1, buffer.dataSize, pDstFile) < buffer.dataSize) {
-            ret = AC_DRM_UNKNOWN_ERROR;
-        }
-    }
-
-    if (pSrcFile) {
-        fclose(pSrcFile);
-        pSrcFile = NULL;
-    }
-
-    if (pDstFile) {
-        fclose(pDstFile);
-        pDstFile = NULL;
-    }
-
-    LOGD("play } result :%d", ret);
-    return ret;
-}
 
 
 
@@ -446,166 +383,8 @@ jint Java_com_irdeto_drm_ChinaDrm_native_setForceQuit(JNIEnv* env, jobject thiz)
     return result;
 }
 
-/**
- * Native implement for playing protected content.
- */
-jint Java_com_irdeto_drm_ChinaDrm_native_play(JNIEnv* env, jobject thiz, jstring ecmData, jstring dataFile) {
-    ac_drm_ret result = AC_DRM_SUCCESS;
-    ac_drm_session_handle handle = NULL;
-
-    //ac_drm_setJacEnv((void *)env, (void *)thiz);
-    //ac_drm_jacVerify();
-
-
-    if (result == AC_DRM_SUCCESS) {
-        const ac_drm_char* pDataFile = (dataFile ? env->GetStringUTFChars(dataFile, NULL) : NULL);
-        ac_drm_byte_buffer drmMetadata = {0};
-        ac_drm_byte_buffer createSessionUserDataBuf = {0};
-        ac_drm_create_session_params createSessionParams = {0};
-        jobject configInstance = getConfigInstance(env, thiz);
-        jstring createSessionUserDataObj = getCreateSessionUserData(env, configInstance);
-        const ac_drm_byte *pCreateSessionUserData = ( const ac_drm_byte *)env->GetStringUTFChars( createSessionUserDataObj, NULL);
-
-        drmMetadata.pData = (ecmData ? ( ac_drm_byte *)env->GetStringUTFChars( ecmData, NULL) : NULL);
-        drmMetadata.dataSize = (ecmData ? SPI_strlen((ac_drm_char *)drmMetadata.pData) + 1 : 0);
-
-        createSessionUserDataBuf.pData = (ac_drm_byte *)pCreateSessionUserData;
-        createSessionUserDataBuf.dataSize = strlen((const ac_drm_char *)pCreateSessionUserData) + 1;
-
-        createSessionParams.metadataType = AC_DRM_METADATA_CHINADRM_HLS;
-        createSessionParams.pDrmMetadata = &drmMetadata;
-        createSessionParams.pUserData = (createSessionUserDataBuf.dataSize == 1) ? NULL : &createSessionUserDataBuf;
-
-        result = createSession(&createSessionParams, &handle, AC_DRM_FALSE);
-        if (result == AC_DRM_SUCCESS) {
-            LOGD("play NO.1 segment");
-            result = play(handle, pDataFile);
-        }
-
-        if (result == AC_DRM_SUCCESS) {
-            LOGD("play NO.2 segment");
-            result = updateSession(handle, &drmMetadata, AC_DRM_METADATA_CHINADRM_HLS);
-            if (result == AC_DRM_SUCCESS) {
-                result = play(handle, pDataFile);
-            }
-        }
-
-        if (handle != NULL) {
-            destroySession(handle);
-        }
-
-        if (createSessionUserDataBuf.pData) env->ReleaseStringUTFChars( createSessionUserDataObj, (const char*)createSessionUserDataBuf.pData);
-        if (drmMetadata.pData) env->ReleaseStringUTFChars( ecmData, (const char *)drmMetadata.pData);
-        if (dataFile) env->ReleaseStringUTFChars( dataFile, pDataFile);
-    }
-
-    return result;
-}
-
-/**
- * Native implement for playing protected content with local license.
- */
-jint Java_com_irdeto_drm_ChinaDrm_native_play_local(JNIEnv* env, jobject thiz, jstring ecmData, jstring dataFile) {
-    ac_drm_ret result = AC_DRM_SUCCESS;
-    ac_drm_session_handle handle = NULL;
-
-   // ac_drm_setJacEnv((void *)env, (void *)thiz);
-    //ac_drm_jacVerify();
-
-
-    if (result == AC_DRM_SUCCESS) {
-        const ac_drm_char* pDataFile = (dataFile ? env->GetStringUTFChars( dataFile, NULL) : NULL);
-        ac_drm_byte_buffer drmMetadata = {0};
-        ac_drm_byte_buffer createSessionUserDataBuf = {0};
-        ac_drm_create_session_params createSessionParams = {0};
-        jobject configInstance = getConfigInstance(env, thiz);
-        jstring createSessionUserDataObj = getCreateSessionUserData(env, configInstance);
-        const ac_drm_byte *pCreateSessionUserData = (ac_drm_byte *)env->GetStringUTFChars( createSessionUserDataObj, NULL);
-
-        drmMetadata.pData = (ecmData ? (ac_drm_byte *)env->GetStringUTFChars( ecmData, NULL) : NULL);
-        drmMetadata.dataSize = (ecmData ? SPI_strlen((ac_drm_char *)drmMetadata.pData) + 1 : 0);
-
-        createSessionUserDataBuf.pData = (ac_drm_byte *)pCreateSessionUserData;
-        createSessionUserDataBuf.dataSize = strlen((const ac_drm_char *)pCreateSessionUserData) + 1;
-
-        createSessionParams.metadataType = AC_DRM_METADATA_CHINADRM_HLS;
-        createSessionParams.pDrmMetadata = &drmMetadata;
-        createSessionParams.pUserData = (createSessionUserDataBuf.dataSize == 1) ? NULL : &createSessionUserDataBuf;
-
-        result = createSession(&createSessionParams, &handle, AC_DRM_TRUE);
-        if (result == AC_DRM_SUCCESS) {
-            LOGD("play NO.1 segment");
-            result = play(handle, pDataFile);
-        }
-
-        if (result == AC_DRM_SUCCESS) {
-            LOGD("play NO.2 segment");
-            result = updateSession(handle, &drmMetadata, AC_DRM_METADATA_CHINADRM_HLS);
-            if (result == AC_DRM_SUCCESS) {
-                result = play(handle, pDataFile);
-            }
-        }
-
-        if (handle != NULL) {
-            destroySession(handle);
-        }
-
-        if (createSessionUserDataBuf.pData) env->ReleaseStringUTFChars( createSessionUserDataObj, (const char *)createSessionUserDataBuf.pData);
-        if (drmMetadata.pData) env->ReleaseStringUTFChars(ecmData, (const char *)drmMetadata.pData);
-        if (dataFile) env->ReleaseStringUTFChars( dataFile, pDataFile);
-    }
-
-    return result;
-}
-
-
-jstring Java_com_irdeto_drm_ChinaDrm_native_queryinfo(JNIEnv* env, jobject thiz, jstring ecmData) {
-    LOGD("query info {");
-
-    ac_drm_ret result = AC_DRM_SUCCESS;
-    ac_drm_session_handle handle = NULL;
-    jstring strInfo = NULL;
-   // ac_drm_setJacEnv((void *)env, (void *)thiz);
-    //ac_drm_jacVerify();
-
-    if (result == AC_DRM_SUCCESS) {
-        ac_drm_byte_buffer drmMetadata = {0};
-        ac_drm_byte_buffer createSessionUserDataBuf = {0};
-        ac_drm_create_session_params createSessionParams = {0};
-        jobject configInstance = getConfigInstance(env, thiz);
-        jstring createSessionUserDataObj = getCreateSessionUserData(env, configInstance);
-        const ac_drm_byte *pCreateSessionUserData = (ac_drm_byte *)env->GetStringUTFChars( createSessionUserDataObj, NULL);
-
-        drmMetadata.pData = (ecmData ? (ac_drm_byte *)env->GetStringUTFChars( ecmData, NULL) : NULL);
-        drmMetadata.dataSize = (ecmData ? SPI_strlen((ac_drm_char *)drmMetadata.pData) + 1 : 0);
-
-        createSessionUserDataBuf.pData = (ac_drm_byte *)pCreateSessionUserData;
-        createSessionUserDataBuf.dataSize = strlen((const ac_drm_char *)pCreateSessionUserData) + 1;
-
-        createSessionParams.metadataType = AC_DRM_METADATA_CHINADRM_HLS;
-        createSessionParams.pDrmMetadata = &drmMetadata;
-        createSessionParams.pUserData = (createSessionUserDataBuf.dataSize == 1) ? NULL : &createSessionUserDataBuf;
-
-        result = createSession(&createSessionParams, &handle, AC_DRM_FALSE);
-
-        if (result == AC_DRM_SUCCESS) {
-            const ac_drm_char* info = queryinfo(handle);
-            strInfo = newStringFromStandardUTF8(env, (ac_drm_char *)info);
-        }
-
-        if (handle != NULL) {
-            destroySession(handle);
-        }
-
-        if (createSessionUserDataBuf.pData) env->ReleaseStringUTFChars( createSessionUserDataObj, (const char*)createSessionUserDataBuf.pData);
-        if (drmMetadata.pData) env->ReleaseStringUTFChars( ecmData, (const char *)drmMetadata.pData);
-    }
-
-    LOGD("query info }");
-    return strInfo;
-}
-
-static ac_drm_ret decrypt(ac_drm_session_handle handle, ac_drm_byte* arr, ac_drm_uint32 length, jboolean isFinal, int* puffer_decrypted_size )
+//decrypt core
+static ac_drm_ret decrypt(ac_drm_session_handle handle, ac_drm_byte* arr, ac_drm_uint32 length, jboolean isFinal, int* pbuffer_decrypted_size )
 {
     ac_drm_decryptParameter decParameter = {0};
     //memcpy(decParameter.iv, gDecryptParameter.iv, 16);
@@ -622,17 +401,16 @@ static ac_drm_ret decrypt(ac_drm_session_handle handle, ac_drm_byte* arr, ac_drm
 
     if(length > 0){
         //LOGD("read... %d", length);
-        // decrypt data
+
         //LOGD("decryptBuffer {");
         buffer.pData = arr;
         buffer.dataSize = length;
 
         ret = decryptBuffer(handle, &buffer, &decParameter);
-        //memcpy(gDecryptParameter.iv, decParameter.iv,16);
         //LOGD("decryptBuffer } result = %d", ret);
         /*if(buffer.dataSize!= length)
             ret = AC_DRM_UNKNOWN_ERROR;*/
-        *puffer_decrypted_size = buffer.dataSize;
+        *pbuffer_decrypted_size = buffer.dataSize;
     }
     return ret;
 }
@@ -674,12 +452,12 @@ static ac_drm_ret createSessionHandle(JNIEnv* env, jobject thiz, jstring ecmData
     return result;
 }
 
-void Java_com_irdeto_ChinaDrm_createSession(JNIEnv* env, jobject thiz, jstring ecmData){
+void Java_com_irdeto_ChinaDrm_CreateSession(JNIEnv* env, jobject thiz, jstring ecmData){
 
     createSessionHandle(env,thiz,ecmData);
 }
 
-jbyteArray Java_com_irdeto_drm_ChinaDrm_decryptBuffer(JNIEnv* env, jobject thiz, jbyteArray buffer, jstring ecmData, jboolean isFinal){
+jbyteArray Java_com_irdeto_drm_ChinaDrm_DecryptBuffer(JNIEnv* env, jobject thiz, jbyteArray buffer, jstring ecmData, jboolean isFinal){
     //LOGD("decryptBuffer");
     ac_drm_uint32 len = 0;
     ac_drm_ret ret = AC_DRM_SUCCESS;
@@ -690,8 +468,6 @@ jbyteArray Java_com_irdeto_drm_ChinaDrm_decryptBuffer(JNIEnv* env, jobject thiz,
     drmMetadata.dataSize = (ecmData ? SPI_strlen((const ac_drm_char *)drmMetadata.pData) + 1 : 0);
 
     if(gSessionHandle == NULL){
-       // drmMetadata.pData = (ecmData ? (ac_drm_byte *)env->GetStringUTFChars(ecmData, NULL) : NULL);
-        //drmMetadata.dataSize = (ecmData ? SPI_strlen((const ac_drm_char *)drmMetadata.pData) + 1 : 0);
         if(createSessionHandle(env, thiz, ecmData) != AC_DRM_SUCCESS)
             return NULL;
     } else{
@@ -716,7 +492,6 @@ jbyteArray Java_com_irdeto_drm_ChinaDrm_decryptBuffer(JNIEnv* env, jobject thiz,
 
     env->SetByteArrayRegion(c_result, 0, decrypt_size, c_array);
     env->ReleaseByteArrayElements(buffer, c_array, 0);
-    //env->DeleteLocalRef(c_result);
     return c_result;
 
 }
@@ -725,13 +500,10 @@ static JNINativeMethod g_methods[] = {
         { _NATIVE_INITIDS, "()V", (void*) Java_com_irdeto_drm_ChinaDrm_native_initIDs },
         { _NATIVE_STARTUP, "(Ljava/lang/String;Ljava/lang/String;Landroid/content/Context;)I", (void*) Java_com_irdeto_drm_ChinaDrm_native_startup },
         { _NATIVE_SHUTDOWN, "()I", (void*) Java_com_irdeto_drm_ChinaDrm_native_shutdown },
-        { _NATIVE_PLAY, "(Ljava/lang/String;Ljava/lang/String;)I", (void*) Java_com_irdeto_drm_ChinaDrm_native_play },
-        { _NATIVE_PLAY_LOCAL, "(Ljava/lang/String;Ljava/lang/String;)I", (void*) Java_com_irdeto_drm_ChinaDrm_native_play_local },
-        { _NATIVE_QUERY_INFO, "(Ljava/lang/String;)Ljava/lang/String;", (void*) Java_com_irdeto_drm_ChinaDrm_native_queryinfo },
         { _NATIVE_ACQUIRELICENSE, "(Ljava/lang/String;Ljava/lang/String;)I", (void*) Java_com_irdeto_drm_ChinaDrm_native_acquireLicense },
         { _NATIVE_ACQUIRELICENSEBYURL, "(Ljava/lang/String;Ljava/lang/String;)I", (void*) Java_com_irdeto_drm_ChinaDrm_native_acquireLicenseByUrl },
-        {_NATIVE_DECRYPTBUFFER,"([BLjava/lang/String;Z)[B",(void *) Java_com_irdeto_drm_ChinaDrm_decryptBuffer},
-        {_NATIVE_CREATE_SESSION,"(Ljava/lang/String;)V",(void *) Java_com_irdeto_ChinaDrm_createSession},
+        {_NATIVE_DECRYPTBUFFER,"([BLjava/lang/String;Z)[B",(void *) Java_com_irdeto_drm_ChinaDrm_DecryptBuffer},
+        {_NATIVE_CREATE_SESSION,"(Ljava/lang/String;)V",(void *) Java_com_irdeto_ChinaDrm_CreateSession},
         {_NATIVE_DESTORY_SESSION,"()V",(void *)Java_com_irdeto_ChinaDrm_destorySession},
         { _NATIVE_SETFORCEQUIT, "()I", (void*) Java_com_irdeto_drm_ChinaDrm_native_setForceQuit }
 };
